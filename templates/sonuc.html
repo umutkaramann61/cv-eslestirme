@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Sonuçlar{% endblock %}
+{% block content %}
+<div class="baslik-satir">
+  <h1>Eşleşme sonuçların</h1>
+  <a class="btn ikincil" href="{{ url_for('index') }}">Yeni CV dene</a>
+</div>
+<p class="soluk">Yöntem: {% if sonuc.yontem == 'ai' %}Yapay zekâ analizi{% else %}Anahtar kelime karşılaştırması{% endif %}. Puanlar yol göstericidir; başvurmaktan çekinme!</p>
+
+{% if sonuc.genel %}
+<div class="kart vurgu">
+  <h2>Genel değerlendirme</h2>
+  <p>{{ sonuc.genel }}</p>
+  {% if sonuc.oneriler %}<h3>CV'ni güçlendirmek için</h3><ul>{% for o in sonuc.oneriler %}<li>{{ o }}</li>{% endfor %}</ul>{% endif %}
+</div>
+{% endif %}
+
+{% for r in sonuc.sonuclar %}
+{% set ilan = r.ilan %}
+{% set renk = 'yuksek' if r.skor >= 70 else ('orta' if r.skor >= 40 else 'dusuk') %}
+<article class="kart sonuc">
+  <div class="skor {{ renk }}"><span>{{ r.skor }}</span><small>/100</small></div>
+  <div class="sonuc-ic">
+    {% include "_ilan_ozet.html" %}
+    <div class="cubuk"><div class="dolu {{ renk }}" style="width: {{ r.skor }}%"></div></div>
+    {% if r.yorum %}<p>{{ r.yorum }}</p>{% endif %}
+    <div class="beceriler">
+      {% if r.eslesen %}<div><b>✓ Eşleşen:</b> {% for s in r.eslesen %}<span class="cip var">{{ s }}</span>{% endfor %}</div>{% endif %}
+      {% if r.eksik %}<div><b>✗ Eksik:</b> {% for s in r.eksik %}<span class="cip yok">{{ s }}</span>{% endfor %}</div>{% endif %}
+    </div>
+    <details>
+      <summary>İlan ayrıntıları ve başvuru</summary>
+      {% if ilan.aciklama %}<p class="metin">{{ ilan.aciklama }}</p>{% endif %}
+      {% if ilan.son_tarih %}<p><b>Son başvuru:</b> {{ ilan.son_tarih }}</p>{% endif %}
+      {% if ilan.basvuru %}<p><b>Başvuru:</b> {% if ilan.basvuru.startswith('http') %}<a href="{{ ilan.basvuru }}" target="_blank" rel="noopener">Başvuru sayfasını aç ↗</a>{% else %}{{ ilan.basvuru }}{% endif %}</p>{% endif %}
+    </details>
+  </div>
+</article>
+{% endfor %}
+{% endblock %}

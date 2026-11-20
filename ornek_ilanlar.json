@@ -1,0 +1,50 @@
+[
+  {
+    "baslik": "Otomasyon Teknisyeni Stajyeri (ÖRNEK İLAN)",
+    "firma": "Örnek Otomasyon Ltd.",
+    "konum": "Üsküdar, İstanbul",
+    "calisma_turu": "Staj",
+    "alan": "Otomasyon",
+    "gerekli_beceriler": "PLC, pnömatik, elektrik, teknik resim",
+    "tercih_beceriler": "TIA Portal, HMI, İngilizce",
+    "aciklama": "Bu bir örnek ilandır; yönetim panelinden silebilir veya düzenleyebilirsiniz.\nÜretim hattındaki PLC kontrollü makinelerin bakım ve devreye alma çalışmalarına destek olacak stajyer aranıyor.",
+    "basvuru": "ik@ornek-firma.com",
+    "son_tarih": ""
+  },
+  {
+    "baslik": "Mekatronik Bakım Elemanı (ÖRNEK İLAN)",
+    "firma": "Örnek Makine San. A.Ş.",
+    "konum": "Tuzla, İstanbul",
+    "calisma_turu": "Tam zamanlı",
+    "alan": "Mekatronik",
+    "gerekli_beceriler": "bakım onarım, hidrolik, pnömatik, sensör, motor kontrol",
+    "tercih_beceriler": "PLC, ehliyet, iş güvenliği",
+    "aciklama": "Bu bir örnek ilandır.\nCNC ve paketleme makinelerinin periyodik bakımı, arıza tespiti ve onarımı.",
+    "basvuru": "https://example.com/basvuru",
+    "son_tarih": ""
+  },
+  {
+    "baslik": "Robotik Kodlama Eğitmen Yardımcısı (ÖRNEK İLAN)",
+    "firma": "Örnek Eğitim Merkezi",
+    "konum": "Üsküdar, İstanbul",
+    "calisma_turu": "Yarı zamanlı",
+    "alan": "Robotik",
+    "gerekli_beceriler": "Arduino, robotik, iletişim",
+    "tercih_beceriler": "Python, Raspberry Pi, takım çalışması",
+    "aciklama": "Bu bir örnek ilandır.\nHafta sonu robotik kodlama atölyelerinde ortaokul öğrencilerine yardımcı olacak genç arkadaş aranıyor.",
+    "basvuru": "0216 000 00 00",
+    "son_tarih": ""
+  },
+  {
+    "baslik": "Elektrik Pano Montaj Stajyeri (ÖRNEK İLAN)",
+    "firma": "Örnek Elektrik Taahhüt",
+    "konum": "Ümraniye, İstanbul",
+    "calisma_turu": "Staj",
+    "alan": "Elektrik",
+    "gerekli_beceriler": "elektrik, ölçüm, teknik resim",
+    "tercih_beceriler": "AutoCAD, lehim, iş güvenliği",
+    "aciklama": "Bu bir örnek ilandır.\nAlçak gerilim pano montajı ve kablolama işlerinde usta yanında staj imkânı.",
+    "basvuru": "staj@ornek-elektrik.com",
+    "son_tarih": ""
+  }
+]

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Yönetici girişi{% endblock %}
+{% block content %}
+<form class="kart dar" method="post">
+  <h1>Yönetici girişi</h1>
+  {% if kapali %}
+    <p>Yönetim paneli kapalı: sunucuda <code>ADMIN_PASSWORD</code> ayarlanmamış.</p>
+  {% else %}
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    <label>Şifre <input type="password" name="sifre" required autofocus></label>
+    <button class="btn" type="submit">Giriş</button>
+  {% endif %}
+</form>
+{% endblock %}

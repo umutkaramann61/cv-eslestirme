@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Yönetim{% endblock %}
+{% block content %}
+<div class="baslik-satir">
+  <h1>İlan yönetimi</h1>
+  <div class="dugmeler">
+    <a class="btn" href="{{ url_for('ilan_yeni') }}">+ Yeni ilan</a>
+    <form method="post" action="{{ url_for('admin_logout') }}"><input type="hidden" name="csrf" value="{{ csrf_token }}"><button class="btn ikincil">Çıkış</button></form>
+  </div>
+</div>
+<p class="soluk">Yapay zekâ eşleştirmesi: {% if ai_aktif %}<b>açık</b>{% else %}<b>kapalı</b> (ANTHROPIC_API_KEY ayarlanmamış — anahtar kelime yöntemi kullanılıyor){% endif %}</p>
+<div class="tablo-kap">
+<table class="tablo">
+  <thead><tr><th>İlan</th><th>Tür</th><th>Son tarih</th><th>Durum</th><th></th></tr></thead>
+  <tbody>
+  {% for i in ilanlar %}
+  <tr>
+    <td><b>{{ i.baslik }}</b><br><span class="soluk">{{ i.firma }}</span></td>
+    <td>{{ i.calisma_turu }}</td>
+    <td>{{ i.son_tarih or '—' }}</td>
+    <td>{% if i.aktif %}<span class="cip var">Yayında</span>{% else %}<span class="cip yok">Pasif</span>{% endif %}</td>
+    <td class="islem">
+      <a href="{{ url_for('ilan_duzenle', job_id=i.id) }}">Düzenle</a>
+      <form method="post" action="{{ url_for('ilan_sil', job_id=i.id) }}" onsubmit="return confirm('Bu ilan silinsin mi?')">
+        <input type="hidden" name="csrf" value="{{ csrf_token }}"><button class="link-btn">Sil</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="5">Henüz ilan yok.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="kart">
+  <h2>Yedekleme</h2>
+  <p class="soluk">İlanları ara sıra yedekleyin. Yedek dosyasını yükleyerek ilanları geri getirebilirsiniz.</p>
+  <a class="btn ikincil" href="{{ url_for('yedek_indir') }}">Yedeği indir (.json)</a>
+  <form method="post" action="{{ url_for('yedek_yukle') }}" enctype="multipart/form-data" class="satir">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    <input type="file" name="yedek" accept=".json" required>
+    <button class="btn ikincil">Yedekten ekle</button>
+  </form>
+</div>
+{% endblock %}

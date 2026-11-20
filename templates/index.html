@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <h1>CV'ni yükle, sana uygun staj ve iş ilanlarını bul</h1>
+  <p>Şu anda <strong>{{ ilan_sayisi }}</strong> aktif ilan var. CV'ni yükle; her ilan için uygunluk puanını, eşleşen ve eksik becerilerini gör.</p>
+</section>
+
+<form class="kart" method="post" action="{{ url_for('eslestir') }}" enctype="multipart/form-data" onsubmit="var b=document.getElementById('gonder');b.disabled=true;b.textContent='Analiz ediliyor… (30 sn sürebilir)';">
+  <input type="hidden" name="csrf" value="{{ csrf_token }}">
+  <label class="yukle">
+    <input type="file" name="cv_dosya" accept=".pdf,.docx,.txt" onchange="document.getElementById('dosya-ad').textContent=this.files[0]?this.files[0].name:'Dosya seçilmedi'">
+    <span class="yukle-ikon">⬆</span>
+    <span><strong>CV dosyanı seç</strong> (PDF, Word .docx veya .txt — en fazla 5 MB)</span>
+    <span id="dosya-ad" class="soluk">Dosya seçilmedi</span>
+  </label>
+  <details>
+    <summary>Dosyan yok mu? CV metnini buraya yapıştır</summary>
+    <textarea name="cv_metin" rows="8" placeholder="Ad Soyad&#10;Okul / Bölüm&#10;Beceriler: PLC, AutoCAD, pnömatik…&#10;Projeler, sertifikalar, staj deneyimi…"></textarea>
+  </details>
+  {% if ai_aktif %}
+  <fieldset class="yontem">
+    <label><input type="radio" name="yontem" value="ai" checked> Yapay zekâ ile ayrıntılı analiz</label>
+    <label><input type="radio" name="yontem" value="anahtar"> Hızlı (anahtar kelime)</label>
+  </fieldset>
+  {% else %}
+  <input type="hidden" name="yontem" value="anahtar">
+  {% endif %}
+  <button id="gonder" class="btn" type="submit">Eşleştir</button>
+</form>
+
+<section class="adimlar">
+  <div><b>1</b><span>CV'ni yükle</span></div>
+  <div><b>2</b><span>Sistem becerilerini ilanlarla karşılaştırır</span></div>
+  <div><b>3</b><span>Puanını, eksiklerini ve başvuru bilgisini gör</span></div>
+</section>
+{% endblock %}
