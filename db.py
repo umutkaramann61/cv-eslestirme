@@ -22,7 +22,7 @@ FIELDS = [
     ("il", False), ("ilce", False), ("sektor", False), ("mezuniyet_alanlari", True),
     ("uzmanliklar", True), ("robot_markalari", True), ("min_deneyim", False),
     ("surucu_belgesi", False), ("ilan_detayi", False), ("basvuru", False), ("son_tarih", False),
-    ("durum", False),
+    ("durum", False), ("instagram", False),
 ]
 NAMES = [f for f, _ in FIELDS]
 DURUMLAR = ("bekliyor", "yayinda", "pasif")
@@ -71,6 +71,16 @@ def init_db(seed_file=None):
         for n in NAMES
     )
     _run(f"CREATE TABLE IF NOT EXISTS {TABLE} (id {id_col}, {cols}, olusturma TEXT DEFAULT '')")
+    # Sonradan eklenen sütunları mevcut tabloya ekle (veri kaybı olmadan)
+    if _is_pg():
+        mevcut = {r["column_name"] for r in _run(
+            "SELECT column_name FROM information_schema.columns WHERE table_name = ?", (TABLE,), fetch="all")}
+    else:
+        mevcut = {r["name"] for r in _run(f"PRAGMA table_info({TABLE})", fetch="all")}
+    for n in NAMES:
+        if n not in mevcut:
+            tip = "INTEGER DEFAULT 0" if n in ("min_deneyim", "surucu_belgesi") else "TEXT DEFAULT ''"
+            _run(f"ALTER TABLE {TABLE} ADD COLUMN {n} {tip}")
     if seed_file and os.path.exists(seed_file):
         row = _run(f"SELECT COUNT(*) AS n FROM {TABLE}", fetch="one")
         if row and int(row["n"]) == 0:

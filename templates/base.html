@@ -59,6 +59,17 @@
     doldur(true);
   })();
 </script>
+<script>
+  // Instagram gönderileri: sayfada varsa Instagram'ın resmî gömme kodunu yükle
+  (function () {
+    if (!document.querySelector('.instagram-media')) return;
+    var sc = document.createElement('script'); sc.async = true; sc.src = 'https://www.instagram.com/embed.js';
+    document.body.appendChild(sc);
+    document.querySelectorAll('details').forEach(function (d) {
+      d.addEventListener('toggle', function () { if (d.open && window.instgrm) window.instgrm.Embeds.process(); });
+    });
+  })();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

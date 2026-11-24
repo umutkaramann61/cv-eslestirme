@@ -16,7 +16,7 @@
   <tbody>
   {% for i in ilanlar %}
   <tr>
-    <td><b>{{ i.baslik }}</b><br><span class="soluk">{{ i.firma }} · {{ i.iletisim }}</span></td>
+    <td>{% if i.instagram %}<span class="ig-rozet" title="Instagram gönderisi">IG</span> {% endif %}<b>{{ i.baslik }}</b><br><span class="soluk">{{ i.firma }} · {{ i.iletisim }}</span></td>
     <td>{{ i.il }}{% if i.ilce %} / {{ i.ilce }}{% endif %}</td>
     <td>{{ i.olusturma }}</td>
     <td>{% if i.durum == 'yayinda' %}<span class="cip var">Yayında</span>

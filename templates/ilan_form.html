@@ -10,10 +10,20 @@
   <input type="hidden" name="csrf" value="{{ csrf_token }}">
   <input type="text" name="web_sitesi" class="tuzak" tabindex="-1" autocomplete="off" aria-hidden="true">
 
+  {% if mod != 'isletme' %}
+  <div class="ig-kutu">
+    <label>Instagram gönderisi linki <small>(isteğe bağlı — ilan sayfasında gönderinin kendisi görünür)</small>
+      <input name="instagram" value="{{ ilan.instagram or '' }}" placeholder="https://www.instagram.com/p/…"></label>
+    <p class="soluk">Instagram'da gönderinin sağ üstündeki <b>⋯</b> → <b>Bağlantıyı kopyala</b> ile linki alıp buraya yapıştırın.
+      Sonra aşağıdan il, sektör ve uzmanlık alanlarını seçin; eşleştirme bunlara göre yapılır.
+      Linki girerseniz İletişim ve Başvuru boş bırakılabilir.</p>
+  </div>
+  {% endif %}
+
   <h2>İşletme bilgileri</h2>
   <div class="ikili">
     <label>Firma adı *<input name="firma" required value="{{ ilan.firma or '' }}"></label>
-    <label>İletişim (yetkili, telefon / e-posta) *<input name="iletisim" required value="{{ ilan.iletisim or '' }}" placeholder="Ayşe Yılmaz – 0216 … / ik@firma.com"></label>
+    <label>İletişim (yetkili, telefon / e-posta){% if mod == 'isletme' %} *{% endif %}<input name="iletisim" {% if mod == 'isletme' %}required{% endif %} value="{{ ilan.iletisim or '' }}" placeholder="Ayşe Yılmaz – 0216 … / ik@firma.com"></label>
     {% with il=ilan.il, ilce=ilan.ilce, zorunlu=True %}{% include "_il_ilce.html" %}{% endwith %}
     <label>Sektör *
       <select name="sektor" required>
@@ -66,8 +76,8 @@
 
   <label>İlan detayı <small>(iş tanımı, çalışma saatleri, deneyimli/deneyimsiz, yan haklar…)</small>
     <textarea name="ilan_detayi" rows="6">{{ ilan.ilan_detayi or '' }}</textarea></label>
-  <label>Başvuru yolu * <small>(başvuru linki, e-posta veya telefon — iş arayanlar bunu görür)</small>
-    <input name="basvuru" required value="{{ ilan.basvuru or '' }}" placeholder="https://… veya ik@firma.com"></label>
+  <label>Başvuru yolu{% if mod == 'isletme' %} *{% endif %} <small>(başvuru linki, e-posta veya telefon — iş arayanlar bunu görür)</small>
+    <input name="basvuru" {% if mod == 'isletme' %}required{% endif %} value="{{ ilan.basvuru or '' }}" placeholder="https://… veya ik@firma.com"></label>
 
   {% if mod != 'isletme' %}
   <label>Durum

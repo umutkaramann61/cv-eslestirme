@@ -2,6 +2,7 @@
 import hmac
 import json
 import os
+import re
 import secrets
 from functools import wraps
 
@@ -64,6 +65,35 @@ def admin_required(f):
     return wrapper
 
 
+IG_RE = re.compile(r"^(?:https?://)?(?:www\.)?instagram\.com/(?:[\w.]+/)?(p|reel|tv)/([\w-]+)", re.I)
+
+
+def normalize_instagram(link):
+    """Instagram gönderi linkini standart biçime çevirir; geçersizse None döner."""
+    m = IG_RE.match((link or "").strip())
+    if not m:
+        return None
+    return f"https://www.instagram.com/{m.group(1).lower()}/{m.group(2)}/"
+
+
+def prepare_admin_form(form):
+    """Yönetici formu: Instagram linkini düzelt, boş başvuru/iletişim alanlarını doldur."""
+    f = form.copy()
+    hatalar = []
+    link = f.get("instagram", "").strip()
+    if link:
+        norm = normalize_instagram(link)
+        if not norm:
+            hatalar.append("Instagram linki bir gönderi linki olmalı (ör. https://www.instagram.com/p/ABC123/).")
+            norm = link
+        f["instagram"] = norm
+        if not f.get("basvuru", "").strip():
+            f["basvuru"] = norm
+        if not f.get("iletisim", "").strip():
+            f["iletisim"] = "Instagram gönderisi"
+    return f, hatalar
+
+
 def validate_job(form):
     hatalar = []
     for alan, ad in [("firma", "Firma adı"), ("iletisim", "İletişim bilgisi"), ("baslik", "İlan başlığı"),
@@ -117,7 +147,9 @@ def ilan_ver():
         for h in hatalar:
             flash(h, "hata")
         return render_template("ilan_form.html", ilan=_form_as_job(request.form), mod="isletme")
-    db.add_job(request.form, durum="bekliyor")
+    form = request.form.copy()
+    form.pop("instagram", None)
+    db.add_job(form, durum="bekliyor")
     return render_template("tesekkur.html")
 
 
@@ -170,12 +202,13 @@ def admin():
 def ilan_yeni():
     if request.method == "POST":
         check_csrf()
-        hatalar = validate_job(request.form)
+        form, hatalar = prepare_admin_form(request.form)
+        hatalar += validate_job(form)
         if hatalar:
             for h in hatalar:
                 flash(h, "hata")
-            return render_template("ilan_form.html", ilan=_form_as_job(request.form), mod="yeni")
-        db.add_job(request.form, durum="yayinda")
+            return render_template("ilan_form.html", ilan=_form_as_job(form), mod="yeni")
+        db.add_job(form, durum=form.get("durum") or "yayinda")
         flash("İlan eklendi ve yayına alındı.", "basari")
         return redirect(url_for("admin"))
     return render_template("ilan_form.html", ilan={}, mod="yeni")
@@ -189,12 +222,13 @@ def ilan_duzenle(job_id):
         abort(404)
     if request.method == "POST":
         check_csrf()
-        hatalar = validate_job(request.form)
+        form, hatalar = prepare_admin_form(request.form)
+        hatalar += validate_job(form)
         if hatalar:
             for h in hatalar:
                 flash(h, "hata")
-            return render_template("ilan_form.html", ilan=_form_as_job(request.form) | {"id": job_id}, mod="duzenle")
-        db.update_job(job_id, request.form)
+            return render_template("ilan_form.html", ilan=_form_as_job(form) | {"id": job_id}, mod="duzenle")
+        db.update_job(job_id, form)
         flash("İlan güncellendi.", "basari")
         return redirect(url_for("admin"))
     return render_template("ilan_form.html", ilan=ilan, mod="duzenle")
