@@ -2,20 +2,14 @@
 {% block title %}Sonuçlar{% endblock %}
 {% block content %}
 <div class="baslik-satir">
-  <h1>Eşleşme sonuçların</h1>
-  <a class="btn ikincil" href="{{ url_for('index') }}">Yeni CV dene</a>
+  <h1>Sana uygun ilanlar ({{ sonuclar|length }})</h1>
+  <a class="btn ikincil" href="javascript:history.back()">Bilgilerimi değiştir</a>
 </div>
-<p class="soluk">Yöntem: {% if sonuc.yontem == 'ai' %}Yapay zekâ analizi{% else %}Anahtar kelime karşılaştırması{% endif %}. Puanlar yol göstericidir; başvurmaktan çekinme!</p>
+<p class="soluk">{{ seeker.il }}{% if seeker.ilce %} / {{ seeker.ilce }}{% endif %} · Sektör: {{ seeker.sektor or 'Tümü' }}
+  · {{ seeker.deneyimler|length }} deneyim · Sürücü belgesi: {{ 'var' if seeker.surucu_belgesi else 'yok' }}.
+  Puanlar yol göstericidir; başvurmaktan çekinme!</p>
 
-{% if sonuc.genel %}
-<div class="kart vurgu">
-  <h2>Genel değerlendirme</h2>
-  <p>{{ sonuc.genel }}</p>
-  {% if sonuc.oneriler %}<h3>CV'ni güçlendirmek için</h3><ul>{% for o in sonuc.oneriler %}<li>{{ o }}</li>{% endfor %}</ul>{% endif %}
-</div>
-{% endif %}
-
-{% for r in sonuc.sonuclar %}
+{% for r in sonuclar %}
 {% set ilan = r.ilan %}
 {% set renk = 'yuksek' if r.skor >= 70 else ('orta' if r.skor >= 40 else 'dusuk') %}
 <article class="kart sonuc">
@@ -23,18 +17,20 @@
   <div class="sonuc-ic">
     {% include "_ilan_ozet.html" %}
     <div class="cubuk"><div class="dolu {{ renk }}" style="width: {{ r.skor }}%"></div></div>
-    {% if r.yorum %}<p>{{ r.yorum }}</p>{% endif %}
     <div class="beceriler">
-      {% if r.eslesen %}<div><b>✓ Eşleşen:</b> {% for s in r.eslesen %}<span class="cip var">{{ s }}</span>{% endfor %}</div>{% endif %}
+      {% if r.eslesen %}<div><b>✓ Uygun:</b> {% for s in r.eslesen %}<span class="cip var">{{ s }}</span>{% endfor %}</div>{% endif %}
       {% if r.eksik %}<div><b>✗ Eksik:</b> {% for s in r.eksik %}<span class="cip yok">{{ s }}</span>{% endfor %}</div>{% endif %}
     </div>
     <details>
       <summary>İlan ayrıntıları ve başvuru</summary>
-      {% if ilan.aciklama %}<p class="metin">{{ ilan.aciklama }}</p>{% endif %}
-      {% if ilan.son_tarih %}<p><b>Son başvuru:</b> {{ ilan.son_tarih }}</p>{% endif %}
-      {% if ilan.basvuru %}<p><b>Başvuru:</b> {% if ilan.basvuru.startswith('http') %}<a href="{{ ilan.basvuru }}" target="_blank" rel="noopener">Başvuru sayfasını aç ↗</a>{% else %}{{ ilan.basvuru }}{% endif %}</p>{% endif %}
+      {% include "_ilan_detay.html" %}
     </details>
   </div>
 </article>
+{% else %}
+<div class="kart">
+  <p>Seçtiğin il{% if seeker.sektor %} ve sektörde{% endif %} şu anda yayında ilan yok.</p>
+  <p class="soluk">Sektörü "Tümü" yaparak tekrar deneyebilir ya da <a href="{{ url_for('ilanlar') }}">tüm ilanlara</a> göz atabilirsin.</p>
+</div>
 {% endfor %}
 {% endblock %}

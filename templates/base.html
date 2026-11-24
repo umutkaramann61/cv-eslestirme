@@ -11,7 +11,8 @@
   <div class="kap ust-ic">
     <a class="logo" href="{{ url_for('index') }}"><span class="logo-ikon">◆</span> {{ SITE_ADI }}<small>{{ OKUL_ADI }}</small></a>
     <nav>
-      <a href="{{ url_for('index') }}">CV Eşleştir</a>
+      <a href="{{ url_for('is_ara') }}">İş Arıyorum</a>
+      <a href="{{ url_for('ilan_ver') }}">İlan Ver</a>
       <a href="{{ url_for('ilanlar') }}">İlanlar</a>
       {% if is_admin %}<a href="{{ url_for('admin') }}">Yönetim</a>{% endif %}
     </nav>
@@ -24,8 +25,25 @@
   {% block content %}{% endblock %}
 </main>
 <footer class="alt kap">
-  CV'niz kaydedilmez; yalnızca eşleştirme için anlık olarak işlenir.
+  İş arayan bilgileri kaydedilmez; yalnızca eşleştirme için anlık olarak işlenir.
   {% if not is_admin %}· <a href="{{ url_for('admin_login') }}">Yönetici girişi</a>{% endif %}
 </footer>
+<script>
+  // İl seçilince ilçe önerilerini güncelle (listede yoksa elle yazılabilir)
+  (function () {
+    var ILCELER = {{ S.ILCELER | tojson }};
+    document.querySelectorAll('[data-il]').forEach(function (ilSel) {
+      var dl = document.getElementById(ilSel.dataset.il);
+      function doldur() {
+        dl.innerHTML = '';
+        (ILCELER[ilSel.value] || []).forEach(function (x) {
+          var o = document.createElement('option'); o.value = x; dl.appendChild(o);
+        });
+      }
+      ilSel.addEventListener('change', doldur); doldur();
+    });
+  })();
+</script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

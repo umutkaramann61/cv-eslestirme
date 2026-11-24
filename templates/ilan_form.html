@@ -1,30 +1,92 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Yeni ilan' if yeni else 'İlanı düzenle' }}{% endblock %}
+{% set basliklar = {'isletme': 'İlan Ver (İşletme)', 'yeni': 'Yeni ilan', 'duzenle': 'İlanı düzenle'} %}
+{% block title %}{{ basliklar[mod] }}{% endblock %}
 {% block content %}
-<form class="kart form" method="post">
-  <h1>{{ 'Yeni ilan' if yeni else 'İlanı düzenle' }}</h1>
+<h1>{{ basliklar[mod] }}</h1>
+{% if mod == 'isletme' %}<p class="soluk">İlanınız okul yönetimi tarafından kontrol edildikten sonra yayına girer.</p>{% endif %}
+
+<form class="kart form" method="post"
+      action="{{ url_for('ilan_ver') if mod == 'isletme' else (url_for('ilan_yeni') if mod == 'yeni' else url_for('ilan_duzenle', job_id=ilan.id)) }}">
   <input type="hidden" name="csrf" value="{{ csrf_token }}">
+  <input type="text" name="web_sitesi" class="tuzak" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+  <h2>İşletme bilgileri</h2>
   <div class="ikili">
-    <label>İlan başlığı *<input name="baslik" required value="{{ ilan.baslik or '' }}" placeholder="Otomasyon Teknisyeni Stajyeri"></label>
-    <label>Firma *<input name="firma" required value="{{ ilan.firma or '' }}"></label>
-    <label>Konum<input name="konum" value="{{ ilan.konum or '' }}" placeholder="Üsküdar, İstanbul"></label>
-    <label>Çalışma türü
-      <select name="calisma_turu">
-        {% for t in ['Staj', 'Tam zamanlı', 'Yarı zamanlı', 'Çırak / Kalfa', 'Proje bazlı'] %}
-        <option {% if ilan.calisma_turu == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+    <label>Firma adı *<input name="firma" required value="{{ ilan.firma or '' }}"></label>
+    <label>İletişim (yetkili, telefon / e-posta) *<input name="iletisim" required value="{{ ilan.iletisim or '' }}" placeholder="Ayşe Yılmaz – 0216 … / ik@firma.com"></label>
+    {% with il=ilan.il, ilce=ilan.ilce, zorunlu=True %}{% include "_il_ilce.html" %}{% endwith %}
+    <label>Sektör *
+      <select name="sektor" required>
+        <option value="">— Seçin —</option>
+        {% for x in S.SEKTORLER %}<option {% if ilan.sektor == x %}selected{% endif %}>{{ x }}</option>{% endfor %}
       </select>
     </label>
-    <label>Alan<input name="alan" value="{{ ilan.alan or '' }}" placeholder="Otomasyon, Mekatronik, Elektrik…"></label>
+  </div>
+
+  <h2>İlan</h2>
+  <div class="ikili">
+    <label>İlan başlığı *<input name="baslik" required value="{{ ilan.baslik or '' }}" placeholder="PLC Programcısı"></label>
+    <label>Çalışma türü
+      <select name="calisma_turu">
+        {% for t in S.CALISMA_TURLERI %}<option {% if ilan.calisma_turu == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+
+  <fieldset class="secenek-grup">
+    <legend>Aranan uzmanlık alanları</legend>
+    {% for x in S.UZMANLIK_ALANLARI %}
+    <label class="kutu"><input type="checkbox" name="uzmanliklar" value="{{ x }}" {% if x in (ilan.uzmanliklar or []) %}checked{% endif %} {% if x == 'Robot Programlama' %}id="robot-kutu"{% endif %}> {{ x }}</label>
+    {% endfor %}
+  </fieldset>
+  <fieldset class="secenek-grup" id="robot-markalar">
+    <legend>Robot markası <small>(Robot Programlama için; boş = fark etmez)</small></legend>
+    {% for m in S.ROBOT_MARKALARI %}
+    <label class="kutu"><input type="checkbox" name="robot_markalari" value="{{ m }}" {% if m in (ilan.robot_markalari or []) %}checked{% endif %}> {{ m }}</label>
+    {% endfor %}
+  </fieldset>
+
+  <div class="ikili">
+    <label>Deneyim
+      <select name="min_deneyim">
+        {% for v, ad in S.DENEYIM_SECENEKLERI %}<option value="{{ v }}" {% if (ilan.min_deneyim or 0) == v %}selected{% endif %}>{{ ad }}</option>{% endfor %}
+      </select>
+    </label>
     <label>Son başvuru tarihi<input type="date" name="son_tarih" value="{{ ilan.son_tarih or '' }}"></label>
   </div>
-  <label>Gerekli beceriler <small>(virgülle ayırın)</small><input name="gerekli_beceriler" value="{{ ilan.gerekli_beceriler or '' }}" placeholder="PLC, pnömatik, teknik resim"></label>
-  <label>Tercih sebebi beceriler <small>(virgülle ayırın)</small><input name="tercih_beceriler" value="{{ ilan.tercih_beceriler or '' }}" placeholder="TIA Portal, İngilizce, ehliyet"></label>
-  <label>Açıklama<textarea name="aciklama" rows="6">{{ ilan.aciklama or '' }}</textarea></label>
-  <label>Başvuru (link veya e-posta/telefon)<input name="basvuru" value="{{ ilan.basvuru or '' }}" placeholder="https://… veya ik@firma.com"></label>
-  <label class="kutu"><input type="checkbox" name="aktif" value="1" {% if ilan.aktif %}checked{% endif %}> Yayında</label>
+
+  <fieldset class="secenek-grup">
+    <legend>Mezuniyet alanı <small>(birden fazla seçilebilir; boş = fark etmez)</small></legend>
+    {% for x in S.MEZUNIYET_ALANLARI %}
+    <label class="kutu"><input type="checkbox" name="mezuniyet_alanlari" value="{{ x }}" {% if x in (ilan.mezuniyet_alanlari or []) %}checked{% endif %}> {{ x }}</label>
+    {% endfor %}
+  </fieldset>
+
+  <label class="kutu"><input type="checkbox" name="surucu_belgesi" value="1" {% if ilan.surucu_belgesi %}checked{% endif %}> Sürücü belgesi isteniyor</label>
+
+  <label>İlan detayı <small>(iş tanımı, çalışma saatleri, deneyimli/deneyimsiz, yan haklar…)</small>
+    <textarea name="ilan_detayi" rows="6">{{ ilan.ilan_detayi or '' }}</textarea></label>
+  <label>Başvuru yolu * <small>(başvuru linki, e-posta veya telefon — iş arayanlar bunu görür)</small>
+    <input name="basvuru" required value="{{ ilan.basvuru or '' }}" placeholder="https://… veya ik@firma.com"></label>
+
+  {% if mod != 'isletme' %}
+  <label>Durum
+    <select name="durum">
+      {% for v, ad in [('yayinda', 'Yayında'), ('bekliyor', 'Onay bekliyor'), ('pasif', 'Pasif (gizli)')] %}
+      <option value="{{ v }}" {% if (ilan.durum or 'yayinda') == v %}selected{% endif %}>{{ ad }}</option>{% endfor %}
+    </select>
+  </label>
+  {% endif %}
+
   <div class="dugmeler">
-    <button class="btn" type="submit">Kaydet</button>
-    <a class="btn ikincil" href="{{ url_for('admin') }}">Vazgeç</a>
+    <button class="btn" type="submit">{{ 'İlanı gönder' if mod == 'isletme' else 'Kaydet' }}</button>
+    {% if mod != 'isletme' %}<a class="btn ikincil" href="{{ url_for('admin') }}">Vazgeç</a>{% endif %}
   </div>
 </form>
+{% endblock %}
+{% block scripts %}
+<script>
+  var rk = document.getElementById('robot-kutu'), rm = document.getElementById('robot-markalar');
+  function g() { rm.hidden = !rk.checked; } rk.addEventListener('change', g); g();
+</script>
 {% endblock %}

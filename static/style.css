@@ -90,3 +90,28 @@ label.kutu { display: flex; align-items: center; }
   .sonuc { flex-direction: column; gap: 8px; }
   .skor { width: 60px; height: 60px; }
 }
+
+/* --- İşletme / İş arayan sürümü --- */
+.secim { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+.secim-kart { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: var(--yazi); transition: border-color .15s, transform .15s; }
+.secim-kart:hover { border-color: var(--ana); transform: translateY(-2px); }
+.secim-kart h2 { margin: 4px 0 0; } .secim-kart p { color: var(--soluk); flex: 1; }
+.secim-kart .btn { align-self: flex-start; }
+.secim-ikon { font-size: 2rem; }
+.form h2 { font-size: 1.05rem; margin: 18px 0 10px; padding-top: 12px; border-top: 1px solid var(--cizgi); }
+.form h2:first-of-type { border-top: 0; padding-top: 0; }
+.uclu { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0 14px; }
+fieldset.deneyim, fieldset.secenek-grup { border: 1px solid var(--cizgi); border-radius: 10px; padding: 12px 14px 4px; margin: 0 0 14px; }
+fieldset legend { font-weight: 600; padding: 0 6px; }
+.secenek-grup { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.secenek-grup label.kutu, .markalar label.kutu { font-weight: 400; margin-bottom: 8px; }
+.markalar { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; margin-bottom: 8px; }
+.markalar[hidden], .secenek-grup[hidden] { display: none; }
+.tuzak { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.cip.bekle { background: var(--sari-acik); color: var(--sari); }
+.link-btn.yesil { color: var(--yesil); font-weight: 600; } .link-btn.gri { color: var(--soluk); }
+.islem form { margin-left: 0; margin-right: 10px; }
+.detay { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 10px 0; font-size: .95rem; }
+.detay dt { color: var(--soluk); } .detay dd { margin: 0; }
+.orta-metin { text-align: center; }
+@media (max-width: 640px) { .secim, .uclu { grid-template-columns: 1fr; } .detay { grid-template-columns: 1fr; } .detay dd { margin-bottom: 6px; } }

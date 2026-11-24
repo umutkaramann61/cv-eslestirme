@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Teşekkürler{% endblock %}
+{% block content %}
+<div class="kart dar orta-metin">
+  <h1>Teşekkürler!</h1>
+  <p>İlanınız alındı. Okul yönetimi kontrol ettikten sonra yayına girecek.</p>
+  <p class="soluk">Sorunuz olursa okulumuzla iletişime geçebilirsiniz.</p>
+  <a class="btn" href="{{ url_for('index') }}">Ana sayfaya dön</a>
+</div>
+{% endblock %}

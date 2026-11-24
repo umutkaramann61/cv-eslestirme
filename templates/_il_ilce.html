@@ -1,0 +1,11 @@
+{# Kullanım: {% with il=..., ilce=..., zorunlu=True %}{% include "_il_ilce.html" %}{% endwith %} #}
+<label>İl{% if zorunlu %} *{% endif %}
+  <select name="il" data-il="ilce-listesi" {% if zorunlu %}required{% endif %}>
+    <option value="">— İl seçin —</option>
+    {% for x in S.ILLER %}<option {% if il == x %}selected{% endif %}>{{ x }}</option>{% endfor %}
+  </select>
+</label>
+<label>İlçe <small>(listeden seçin veya yazın)</small>
+  <input name="ilce" list="ilce-listesi" value="{{ ilce or '' }}" autocomplete="off" placeholder="ör. Üsküdar">
+  <datalist id="ilce-listesi"></datalist>
+</label>

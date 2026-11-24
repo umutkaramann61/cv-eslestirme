@@ -1,10 +1,10 @@
 <div class="ilan-ust">
   <div>
     <h3>{{ ilan.baslik }}</h3>
-    <div class="soluk">{{ ilan.firma }}{% if ilan.konum %} · {{ ilan.konum }}{% endif %}</div>
+    <div class="soluk">{{ ilan.firma }} · {{ ilan.il }}{% if ilan.ilce %} / {{ ilan.ilce }}{% endif %}</div>
   </div>
   <div class="etiketler">
     {% if ilan.calisma_turu %}<span class="etiket">{{ ilan.calisma_turu }}</span>{% endif %}
-    {% if ilan.alan %}<span class="etiket alan">{{ ilan.alan }}</span>{% endif %}
+    {% if ilan.sektor %}<span class="etiket alan">{{ ilan.sektor }}</span>{% endif %}
   </div>
 </div>

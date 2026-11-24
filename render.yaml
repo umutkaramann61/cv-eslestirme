@@ -12,8 +12,6 @@ services:
         generateValue: true
       - key: ADMIN_PASSWORD
         sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
       - key: DATABASE_URL
         sync: false
       - key: OKUL_ADI

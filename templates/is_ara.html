@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}İş Arıyorum{% endblock %}
+{% block content %}
+<h1>İş Arıyorum</h1>
+<p class="soluk">Bilgilerini gir, sana uygun ilanları puanlarıyla gösterelim. Bilgilerin kaydedilmez.</p>
+
+<form class="kart form" method="post" action="{{ url_for('is_ara') }}">
+  <input type="hidden" name="csrf" value="{{ csrf_token }}">
+
+  <h2>Konum ve alan</h2>
+  <div class="ikili">
+    {% with il=form.get('il'), ilce=form.get('ilce'), zorunlu=True %}{% include "_il_ilce.html" %}{% endwith %}
+    <label>Sektör
+      <select name="sektor">
+        <option value="">Tümü</option>
+        {% for x in S.SEKTORLER %}<option {% if form.get('sektor') == x %}selected{% endif %}>{{ x }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Mezuniyet alanı
+      <select name="mezuniyet">
+        <option value="">— Seçin —</option>
+        {% for x in S.MEZUNIYET_ALANLARI %}<option {% if form.get('mezuniyet') == x %}selected{% endif %}>{{ x }}</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+
+  <h2>Deneyimler <small class="soluk">(en fazla {{ S.MAKS_DENEYIM }}; deneyimin yoksa boş bırak)</small></h2>
+  {% for i in range(1, S.MAKS_DENEYIM + 1) %}
+  <fieldset class="deneyim" data-no="{{ i }}">
+    <legend>{{ i }}. deneyim</legend>
+    <div class="uclu">
+      <label>Alan
+        <select name="d{{ i }}_alan" class="d-alan">
+          <option value="">— Seçin —</option>
+          {% for x in S.UZMANLIK_ALANLARI %}<option {% if form.get('d%d_alan' % i) == x %}selected{% endif %}>{{ x }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Giriş tarihi<input type="month" name="d{{ i }}_giris" value="{{ form.get('d%d_giris' % i, '') }}"></label>
+      <label>Çıkış tarihi <small>(hâlâ çalışıyorsan boş bırak)</small><input type="month" name="d{{ i }}_cikis" value="{{ form.get('d%d_cikis' % i, '') }}"></label>
+    </div>
+    <div class="markalar" hidden>
+      <span>Robot markası:</span>
+      {% set secili = form.getlist('d%d_marka' % i) if form.getlist is defined else [] %}
+      {% for m in S.ROBOT_MARKALARI %}
+      <label class="kutu"><input type="checkbox" name="d{{ i }}_marka" value="{{ m }}" {% if m in secili %}checked{% endif %}> {{ m }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  {% endfor %}
+
+  <h2>Diğer</h2>
+  <label class="kutu"><input type="checkbox" name="surucu_belgesi" value="1" {% if form.get('surucu_belgesi') %}checked{% endif %}> Sürücü belgem var</label>
+
+  <button class="btn" type="submit">Uygun ilanları göster</button>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+  // "Robot Programlama" seçilince marka seçeneklerini göster
+  document.querySelectorAll('fieldset.deneyim').forEach(function (fs) {
+    var sel = fs.querySelector('.d-alan'), m = fs.querySelector('.markalar');
+    function g() { m.hidden = sel.value !== 'Robot Programlama'; }
+    sel.addEventListener('change', g); g();
+  });
+</script>
+{% endblock %}

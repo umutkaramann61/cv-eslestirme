@@ -1,0 +1,9 @@
+<dl class="detay">
+  {% if ilan.uzmanliklar %}<dt>Aranan uzmanlık</dt><dd>{{ ilan.uzmanliklar | join(', ') }}{% if ilan.robot_markalari %} <span class="soluk">(Robot: {{ ilan.robot_markalari | join(' / ') }})</span>{% endif %}</dd>{% endif %}
+  <dt>Deneyim</dt><dd>{{ deneyim_etiketi.get(ilan.min_deneyim, 'En az %s yıl' % ilan.min_deneyim) }}</dd>
+  <dt>Mezuniyet</dt><dd>{{ ilan.mezuniyet_alanlari | join(', ') if ilan.mezuniyet_alanlari else 'Fark etmez' }}</dd>
+  <dt>Sürücü belgesi</dt><dd>{{ 'İsteniyor' if ilan.surucu_belgesi else 'İstenmiyor' }}</dd>
+  {% if ilan.son_tarih %}<dt>Son başvuru</dt><dd>{{ ilan.son_tarih }}</dd>{% endif %}
+</dl>
+{% if ilan.ilan_detayi %}<p class="metin">{{ ilan.ilan_detayi }}</p>{% endif %}
+{% if ilan.basvuru %}<p><b>Başvuru:</b> {% if ilan.basvuru.startswith('http') %}<a href="{{ ilan.basvuru }}" target="_blank" rel="noopener">Başvuru sayfasını aç ↗</a>{% else %}{{ ilan.basvuru }}{% endif %}</p>{% endif %}

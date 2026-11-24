@@ -1,15 +1,20 @@
-# CV – İş İlanı Eşleştirme Sitesi · Kurulum Rehberi
+# İş Arayan – İşletme Eşleştirme Sitesi · Kurulum Rehberi
 
-Bu site; öğrenci ve mezunların CV'lerini yükleyip okulun yayınladığı staj/iş ilanlarıyla
-eşleşmesini sağlar. Her ilan için **0–100 uygunluk puanı**, **eşleşen beceriler** ve
-**eksik beceriler** gösterilir. İlanları yalnızca **şifreli yönetici paneli** üzerinden siz eklersiniz.
+Sitenin iki bölümü var:
 
-- **Eşleştirme:** Yapay zekâ (Claude) anahtarı girilirse ayrıntılı yorum ve CV önerileri verir.
-  Anahtar yoksa ya da yapay zekâ o an yanıt veremezse site otomatik olarak ücretsiz
-  **anahtar kelime** yöntemine geçer; site hiçbir zaman durmaz.
-- **Gizlilik:** Yüklenen CV'ler hiçbir yere kaydedilmez, yalnızca o an işlenir.
-- **Örnek ilanlar:** İlk açılışta "(ÖRNEK İLAN)" yazan 4 deneme ilanı gelir. Gerçek ilanları
-  ekledikten sonra bunları yönetim panelinden silin.
+- **İşletme (İlan Ver):** Firma; il, ilçe, sektör, aranan uzmanlık alanları (PLC, HMI, SCADA,
+  Robot Programlama + marka…), en az deneyim, mezuniyet alanları, sürücü belgesi ve ilan detayını girer.
+  İlan **onay bekliyor** olarak kaydedilir; siz yönetim panelinden **Onayla** deyince yayına girer.
+- **İş Arayan (İş Arıyorum):** İl, ilçe, sektör (veya Tümü), mezuniyet alanı, en fazla 3 deneyim
+  (alan + giriş/çıkış tarihi; robot için marka) ve sürücü belgesini girer. Aynı ildeki ilanlar
+  **0–100 uygunluk puanıyla**, uygun ve eksik yönleriyle listelenir.
+
+- **Puanlama:** Uzmanlık 45 · Deneyim süresi 20 · Mezuniyet 15 · Sürücü belgesi 10 · Aynı ilçe 10.
+- **Seçim listeleri** (iller, ilçeler, sektörler, mezuniyet ve uzmanlık alanları) `secenekler.py`
+  dosyasındadır; değiştirmek için o dosyayı düzenlemek yeterlidir.
+- **Gizlilik:** İş arayan bilgileri hiçbir yere kaydedilmez, yalnızca o an işlenir.
+- **Örnek ilanlar:** İlk açılışta "(ÖRNEK İLAN)" yazan 4 deneme ilanı gelir. Gerçek ilanlar
+  geldikten sonra bunları yönetim panelinden silin.
 
 ---
 
@@ -19,10 +24,6 @@ eşleşmesini sağlar. Her ilan için **0–100 uygunluk puanı**, **eşleşen b
 2. Tarayıcıda `http://127.0.0.1:5000` açılır.
 3. Yönetim paneli: `http://127.0.0.1:5000/yonetim` — deneme şifresi: `deneme123`
 
-Yapay zekâyı yerelde denemek için `baslat.bat`'ı çalıştırmadan önce komut isteminde:
-```
-set ANTHROPIC_API_KEY=sk-ant-...
-```
 
 ---
 
@@ -54,19 +55,10 @@ set ANTHROPIC_API_KEY=sk-ant-...
    |---|---|
    | `ADMIN_PASSWORD` | Yönetim paneli için güçlü bir şifre |
    | `DATABASE_URL` | Neon'dan kopyaladığınız bağlantı adresi |
-   | `ANTHROPIC_API_KEY` | Yapay zekâ anahtarı (aşağıya bakın). İstemiyorsanız boş bırakın. |
 4. **Apply** → birkaç dakika sonra siteniz şu gibi bir adreste yayında olur:
    `https://cv-eslestirme.onrender.com`
 
 > Ücretsiz planda site 15 dk kullanılmazsa uyur; ilk ziyaret ~30–50 saniye sürebilir, sonra hızlanır.
-
-### Yapay zekâ anahtarı (Claude API)
-1. <https://console.anthropic.com> → hesap açın → **Billing** bölümünden bakiye yükleyin.
-2. **API Keys → Create Key** → `sk-ant-...` ile başlayan anahtarı kopyalayıp Render'da
-   `ANTHROPIC_API_KEY` alanına yapıştırın (Render → servis → **Environment**).
-3. Maliyet: Her CV analizi tek istekte en uygun 12 ilanı birlikte değerlendirir;
-   kabaca CV başına birkaç kuruş–birkaç TL düzeyindedir. Console'da aylık harcama
-   sınırı koymanızı öneririz (**Settings → Limits**).
 
 ---
 
@@ -75,7 +67,7 @@ set ANTHROPIC_API_KEY=sk-ant-...
 ### Seçenek 1 — Bağlantı (en kolay)
 Okul sitenize bir buton/bağlantı ekleyin:
 ```html
-<a href="https://cv-eslestirme.onrender.com" target="_blank">Kariyer Eşleştirme – CV'ni Yükle</a>
+<a href="https://cv-eslestirme.onrender.com" target="_blank">Kariyer Eşleştirme</a>
 ```
 
 ### Seçenek 2 — Sayfanın içine gömmek (iframe)
@@ -96,10 +88,10 @@ Varsayılan `*` değeri tüm sitelere izin verir.
 ---
 
 ## 4. Günlük kullanım (yönetici)
-- **Yeni ilan:** Yönetim → **+ Yeni ilan**. Becerileri virgülle yazın
-  (ör. `PLC, pnömatik, teknik resim`). Eşleştirme bu listeye göre yapılır.
+- **Onay bekleyen ilanlar** yönetim sayfasında en üstte sarı etiketle görünür: Düzenle ile inceleyin, **Onayla** ile yayına alın.
+- **Yeni ilan:** Yönetim → **+ Yeni ilan** (yöneticinin eklediği ilan doğrudan yayına girer).
 - **Son başvuru tarihi** geçen ilanlar otomatik olarak öğrencilere gösterilmez.
-- **Yayında** kutucuğunu kaldırarak ilanı silmeden gizleyebilirsiniz.
+- **Yayından kaldır** ile ilanı silmeden gizleyebilirsiniz.
 - **Yedek:** Yönetim sayfasının altından ilanları `.json` olarak indirip saklayın.
 
 ## 5. İsteğe bağlı ayarlar (Render → Environment)
@@ -108,4 +100,3 @@ Varsayılan `*` değeri tüm sitelere izin verir.
 | `SITE_ADI` | Üst başlıkta görünen ad (varsayılan: Kariyer Eşleştirme) |
 | `OKUL_ADI` | Başlığın yanındaki okul adı |
 | `FRAME_ANCESTORS` | Siteyi gömebilecek adresler |
-| `CLAUDE_MODEL` | Kullanılacak Claude modeli (varsayılan `claude-opus-5-5`) |

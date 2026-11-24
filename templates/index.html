@@ -1,36 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="hero">
-  <h1>CV'ni yükle, sana uygun staj ve iş ilanlarını bul</h1>
-  <p>Şu anda <strong>{{ ilan_sayisi }}</strong> aktif ilan var. CV'ni yükle; her ilan için uygunluk puanını, eşleşen ve eksik becerilerini gör.</p>
+  <h1>Otomasyon ve mekatronik alanında iş arayanlarla işletmeleri buluşturuyoruz</h1>
+  <p>Şu anda <strong>{{ ilan_sayisi }}</strong> yayında ilan var.</p>
 </section>
 
-<form class="kart" method="post" action="{{ url_for('eslestir') }}" enctype="multipart/form-data" onsubmit="var b=document.getElementById('gonder');b.disabled=true;b.textContent='Analiz ediliyor… (30 sn sürebilir)';">
-  <input type="hidden" name="csrf" value="{{ csrf_token }}">
-  <label class="yukle">
-    <input type="file" name="cv_dosya" accept=".pdf,.docx,.txt" onchange="document.getElementById('dosya-ad').textContent=this.files[0]?this.files[0].name:'Dosya seçilmedi'">
-    <span class="yukle-ikon">⬆</span>
-    <span><strong>CV dosyanı seç</strong> (PDF, Word .docx veya .txt — en fazla 5 MB)</span>
-    <span id="dosya-ad" class="soluk">Dosya seçilmedi</span>
-  </label>
-  <details>
-    <summary>Dosyan yok mu? CV metnini buraya yapıştır</summary>
-    <textarea name="cv_metin" rows="8" placeholder="Ad Soyad&#10;Okul / Bölüm&#10;Beceriler: PLC, AutoCAD, pnömatik…&#10;Projeler, sertifikalar, staj deneyimi…"></textarea>
-  </details>
-  {% if ai_aktif %}
-  <fieldset class="yontem">
-    <label><input type="radio" name="yontem" value="ai" checked> Yapay zekâ ile ayrıntılı analiz</label>
-    <label><input type="radio" name="yontem" value="anahtar"> Hızlı (anahtar kelime)</label>
-  </fieldset>
-  {% else %}
-  <input type="hidden" name="yontem" value="anahtar">
-  {% endif %}
-  <button id="gonder" class="btn" type="submit">Eşleştir</button>
-</form>
-
-<section class="adimlar">
-  <div><b>1</b><span>CV'ni yükle</span></div>
-  <div><b>2</b><span>Sistem becerilerini ilanlarla karşılaştırır</span></div>
-  <div><b>3</b><span>Puanını, eksiklerini ve başvuru bilgisini gör</span></div>
-</section>
+<div class="secim">
+  <a class="kart secim-kart" href="{{ url_for('is_ara') }}">
+    <span class="secim-ikon">🔎</span>
+    <h2>İş Arıyorum</h2>
+    <p>İlini, mezuniyet alanını ve deneyimlerini gir; sana uygun ilanları uygunluk puanıyla gör.</p>
+    <span class="btn">Uygun ilanları bul</span>
+  </a>
+  <a class="kart secim-kart" href="{{ url_for('ilan_ver') }}">
+    <span class="secim-ikon">🏭</span>
+    <h2>İşletmeyim, Personel Arıyorum</h2>
+    <p>Aradığın uzmanlık alanlarını ve şartları gir; ilanın onaylandıktan sonra yayına girer.</p>
+    <span class="btn ikincil">İlan ver</span>
+  </a>
+</div>
 {% endblock %}

@@ -1,17 +1,21 @@
 {% extends "base.html" %}
 {% block title %}İlanlar{% endblock %}
 {% block content %}
-<h1>Aktif ilanlar ({{ ilanlar|length }})</h1>
+<div class="baslik-satir">
+  <h1>Yayındaki ilanlar ({{ ilanlar|length }})</h1>
+  <form method="get" class="satir">
+    <select name="il" onchange="this.form.submit()">
+      <option value="">Tüm iller</option>
+      {% for x in S.ILLER %}<option {% if secili_il == x %}selected{% endif %}>{{ x }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
 {% for ilan in ilanlar %}
 <article class="kart">
   {% include "_ilan_ozet.html" %}
-  {% if ilan.gerekli_beceriler %}<p><b>Gerekli:</b> {{ ilan.gerekli_beceriler }}</p>{% endif %}
-  {% if ilan.tercih_beceriler %}<p><b>Tercih sebebi:</b> {{ ilan.tercih_beceriler }}</p>{% endif %}
-  {% if ilan.aciklama %}<p class="metin">{{ ilan.aciklama }}</p>{% endif %}
-  <p class="soluk">{% if ilan.son_tarih %}Son başvuru: {{ ilan.son_tarih }} · {% endif %}
-  {% if ilan.basvuru %}{% if ilan.basvuru.startswith('http') %}<a href="{{ ilan.basvuru }}" target="_blank" rel="noopener">Başvur ↗</a>{% else %}Başvuru: {{ ilan.basvuru }}{% endif %}{% endif %}</p>
+  {% include "_ilan_detay.html" %}
 </article>
 {% else %}
-<p>Şu anda aktif ilan yok.</p>
+<p>Şu anda yayında ilan yok.</p>
 {% endfor %}
 {% endblock %}

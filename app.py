@@ -1,4 +1,4 @@
-"""CV - İş İlanı Eşleştirme sitesi (Flask)."""
+"""İş arayan – İşletme eşleştirme sitesi (Flask)."""
 import hmac
 import json
 import os
@@ -11,16 +11,16 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 import db
 import matcher
+import secenekler as S
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
 
-# Site başka bir sitenin içine (iframe) gömüldüğünde de yönetici girişinin
-# çalışması için HTTPS'te çerez SameSite=None + Secure olmalı.
+# Site başka bir sitenin içine (iframe) gömüldüğünde de çerezlerin çalışması için
 if os.environ.get("RENDER") or os.environ.get("COOKIE_SECURE") == "1":
     app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 
@@ -36,14 +36,13 @@ db.init_db(seed_file=os.path.join(BASE_DIR, "ornek_ilanlar.json"))
 def inject_globals():
     if "csrf" not in session:
         session["csrf"] = secrets.token_hex(16)
-    return {"SITE_ADI": SITE_ADI, "OKUL_ADI": OKUL_ADI,
-            "csrf_token": session["csrf"], "ai_aktif": matcher.ai_available(),
-            "is_admin": session.get("admin", False)}
+    return {"SITE_ADI": SITE_ADI, "OKUL_ADI": OKUL_ADI, "S": S,
+            "csrf_token": session["csrf"], "is_admin": session.get("admin", False),
+            "deneyim_etiketi": dict(S.DENEYIM_SECENEKLERI)}
 
 
 @app.after_request
 def security_headers(resp):
-    # Gömülebilirlik: hangi sitelerin bu sayfayı iframe ile gösterebileceği
     resp.headers["Content-Security-Policy"] = f"frame-ancestors {FRAME_ANCESTORS}"
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -65,51 +64,74 @@ def admin_required(f):
     return wrapper
 
 
+def validate_job(form):
+    hatalar = []
+    for alan, ad in [("firma", "Firma adı"), ("iletisim", "İletişim bilgisi"), ("baslik", "İlan başlığı"),
+                     ("il", "İl"), ("sektor", "Sektör"), ("basvuru", "Başvuru yolu")]:
+        if not form.get(alan, "").strip():
+            hatalar.append(f"{ad} zorunludur.")
+    if form.get("il") and form.get("il") not in S.ILLER:
+        hatalar.append("Geçerli bir il seçin.")
+    return hatalar
+
+
 # ---------------------------------------------------------------- herkese açık
 @app.route("/")
 def index():
-    jobs = db.list_jobs()
-    return render_template("index.html", ilan_sayisi=len(jobs))
+    return render_template("index.html", ilan_sayisi=len(db.list_jobs()))
 
 
 @app.route("/ilanlar")
 def ilanlar():
-    return render_template("ilanlar.html", ilanlar=db.list_jobs())
-
-
-@app.route("/eslestir", methods=["POST"])
-def eslestir():
-    check_csrf()
-    cv_text = ""
-    f = request.files.get("cv_dosya")
-    if f and f.filename:
-        try:
-            cv_text = matcher.extract_text(f.filename, f.read())
-        except ValueError as e:
-            flash(str(e), "hata")
-            return redirect(url_for("index"))
-        except Exception:
-            flash("Dosya okunamadı. Dosya bozuk veya şifreli olabilir; metni kopyalayıp yapıştırmayı deneyin.", "hata")
-            return redirect(url_for("index"))
-    if not cv_text.strip():
-        cv_text = request.form.get("cv_metin", "")
-    cv_text = cv_text.strip()
-
-    if len(cv_text) < 30:
-        flash("CV metni okunamadı veya çok kısa. Taranmış (resim) PDF ise metni elle yapıştırın.", "hata")
-        return redirect(url_for("index"))
-    if len(cv_text) > matcher.MAX_CV_CHARS:
-        flash("CV çok uzun. Lütfen en fazla birkaç sayfalık bir CV yükleyin.", "hata")
-        return redirect(url_for("index"))
-
+    il = request.args.get("il", "")
     jobs = db.list_jobs()
-    if not jobs:
-        flash("Şu anda yayında ilan yok. Daha sonra tekrar deneyin.", "bilgi")
-        return redirect(url_for("index"))
+    if il:
+        jobs = [j for j in jobs if j.get("il") == il]
+    return render_template("ilanlar.html", ilanlar=jobs, secili_il=il)
 
-    sonuc = matcher.match(cv_text, jobs, use_ai=request.form.get("yontem") != "anahtar")
-    # Gizlilik: CV hiçbir yere kaydedilmez, yalnızca bu istekte işlenir.
-    return render_template("sonuc.html", sonuc=sonuc)
+
+@app.route("/is-ara", methods=["GET", "POST"])
+def is_ara():
+    if request.method == "GET":
+        return render_template("is_ara.html", form={})
+    check_csrf()
+    seeker, hatalar = matcher.parse_seeker(request.form)
+    if hatalar:
+        for h in hatalar:
+            flash(h, "hata")
+        return render_template("is_ara.html", form=request.form)
+    sonuclar = matcher.match(seeker, db.list_jobs())
+    # Gizlilik: iş arayan bilgileri kaydedilmez, yalnızca bu istekte işlenir.
+    return render_template("sonuc.html", sonuclar=sonuclar, seeker=seeker)
+
+
+@app.route("/ilan-ver", methods=["GET", "POST"])
+def ilan_ver():
+    if request.method == "GET":
+        return render_template("ilan_form.html", ilan={}, mod="isletme")
+    check_csrf()
+    if request.form.get("web_sitesi"):  # bot tuzağı (gizli alan)
+        return render_template("tesekkur.html")
+    hatalar = validate_job(request.form)
+    if hatalar:
+        for h in hatalar:
+            flash(h, "hata")
+        return render_template("ilan_form.html", ilan=_form_as_job(request.form), mod="isletme")
+    db.add_job(request.form, durum="bekliyor")
+    return render_template("tesekkur.html")
+
+
+def _form_as_job(form):
+    """Hatalı gönderimde formu yeniden doldurmak için."""
+    d = {k: form.get(k, "") for k in db.NAMES}
+    for k in ("mezuniyet_alanlari", "uzmanliklar", "robot_markalari"):
+        d[k] = form.getlist(k)
+    d["surucu_belgesi"] = form.get("surucu_belgesi") in ("1", "on")
+    try:
+        d["min_deneyim"] = int(form.get("min_deneyim") or 0)
+    except ValueError:
+        d["min_deneyim"] = 0
+    return d
 
 
 # ---------------------------------------------------------------- yönetici
@@ -136,7 +158,11 @@ def admin_logout():
 @app.route("/yonetim")
 @admin_required
 def admin():
-    return render_template("admin.html", ilanlar=db.list_jobs(only_active=False))
+    jobs = db.list_jobs(only_published=False)
+    sira = {"bekliyor": 0, "yayinda": 1, "pasif": 2}
+    jobs.sort(key=lambda j: (sira.get(j["durum"], 3), -j["id"]))
+    bekleyen = sum(1 for j in jobs if j["durum"] == "bekliyor")
+    return render_template("admin.html", ilanlar=jobs, bekleyen=bekleyen)
 
 
 @app.route("/yonetim/ilan/yeni", methods=["GET", "POST"])
@@ -144,13 +170,15 @@ def admin():
 def ilan_yeni():
     if request.method == "POST":
         check_csrf()
-        if not request.form.get("baslik") or not request.form.get("firma"):
-            flash("Başlık ve firma zorunludur.", "hata")
-            return render_template("ilan_form.html", ilan=request.form, yeni=True)
-        db.add_job(request.form)
-        flash("İlan eklendi.", "basari")
+        hatalar = validate_job(request.form)
+        if hatalar:
+            for h in hatalar:
+                flash(h, "hata")
+            return render_template("ilan_form.html", ilan=_form_as_job(request.form), mod="yeni")
+        db.add_job(request.form, durum="yayinda")
+        flash("İlan eklendi ve yayına alındı.", "basari")
         return redirect(url_for("admin"))
-    return render_template("ilan_form.html", ilan={"aktif": 1}, yeni=True)
+    return render_template("ilan_form.html", ilan={}, mod="yeni")
 
 
 @app.route("/yonetim/ilan/<int:job_id>", methods=["GET", "POST"])
@@ -161,10 +189,25 @@ def ilan_duzenle(job_id):
         abort(404)
     if request.method == "POST":
         check_csrf()
+        hatalar = validate_job(request.form)
+        if hatalar:
+            for h in hatalar:
+                flash(h, "hata")
+            return render_template("ilan_form.html", ilan=_form_as_job(request.form) | {"id": job_id}, mod="duzenle")
         db.update_job(job_id, request.form)
         flash("İlan güncellendi.", "basari")
         return redirect(url_for("admin"))
-    return render_template("ilan_form.html", ilan=ilan, yeni=False)
+    return render_template("ilan_form.html", ilan=ilan, mod="duzenle")
+
+
+@app.route("/yonetim/ilan/<int:job_id>/durum", methods=["POST"])
+@admin_required
+def ilan_durum(job_id):
+    check_csrf()
+    durum = request.form.get("durum", "")
+    db.set_status(job_id, durum)
+    flash({"yayinda": "İlan yayına alındı.", "pasif": "İlan yayından kaldırıldı."}.get(durum, "Güncellendi."), "basari")
+    return redirect(url_for("admin"))
 
 
 @app.route("/yonetim/ilan/<int:job_id>/sil", methods=["POST"])
@@ -192,19 +235,15 @@ def yedek_yukle():
     try:
         items = json.loads(f.read().decode("utf-8"))
         assert isinstance(items, list)
+        n = 0
         for it in items:
             if it.get("baslik") and it.get("firma"):
                 db.add_job(it)
-        flash(f"{len(items)} ilan içe aktarıldı.", "basari")
+                n += 1
+        flash(f"{n} ilan içe aktarıldı.", "basari")
     except Exception:
         flash("Yedek dosyası okunamadı.", "hata")
     return redirect(url_for("admin"))
-
-
-@app.errorhandler(413)
-def too_large(_e):
-    flash("Dosya çok büyük (en fazla 5 MB).", "hata")
-    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":

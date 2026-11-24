@@ -2,6 +2,8 @@
 
 - DATABASE_URL ortam değişkeni varsa PostgreSQL (ör. Neon ücretsiz) kullanılır.
 - Yoksa yerel SQLite dosyası (data/ilanlar.db) kullanılır.
+
+İlan durumu (durum): 'bekliyor' (işletme gönderdi, onay bekliyor), 'yayinda', 'pasif'.
 """
 import json
 import os
@@ -12,12 +14,18 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 DATA_DIR = os.environ.get("DATA_DIR", os.path.join(BASE_DIR, "data"))
 SQLITE_PATH = os.path.join(DATA_DIR, "ilanlar.db")
+TABLE = "isletme_ilanlari"
 
+# (alan adı, liste mi?)
 FIELDS = [
-    "baslik", "firma", "konum", "calisma_turu", "alan",
-    "gerekli_beceriler", "tercih_beceriler", "aciklama",
-    "basvuru", "son_tarih", "aktif",
+    ("firma", False), ("iletisim", False), ("baslik", False), ("calisma_turu", False),
+    ("il", False), ("ilce", False), ("sektor", False), ("mezuniyet_alanlari", True),
+    ("uzmanliklar", True), ("robot_markalari", True), ("min_deneyim", False),
+    ("surucu_belgesi", False), ("ilan_detayi", False), ("basvuru", False), ("son_tarih", False),
+    ("durum", False),
 ]
+NAMES = [f for f, _ in FIELDS]
+DURUMLAR = ("bekliyor", "yayinda", "pasif")
 
 
 def _is_pg():
@@ -36,7 +44,6 @@ def _connect():
 
 
 def _q(sql):
-    """SQLite '?' yer tutucularını PostgreSQL için '%s' yap."""
     return sql.replace("?", "%s") if _is_pg() else sql
 
 
@@ -59,78 +66,96 @@ def _run(sql, params=(), fetch=None):
 
 def init_db(seed_file=None):
     id_col = "SERIAL PRIMARY KEY" if _is_pg() else "INTEGER PRIMARY KEY AUTOINCREMENT"
-    _run(f"""
-        CREATE TABLE IF NOT EXISTS ilanlar (
-            id {id_col},
-            baslik TEXT NOT NULL,
-            firma TEXT NOT NULL,
-            konum TEXT DEFAULT '',
-            calisma_turu TEXT DEFAULT '',
-            alan TEXT DEFAULT '',
-            gerekli_beceriler TEXT DEFAULT '',
-            tercih_beceriler TEXT DEFAULT '',
-            aciklama TEXT DEFAULT '',
-            basvuru TEXT DEFAULT '',
-            son_tarih TEXT DEFAULT '',
-            aktif INTEGER DEFAULT 1,
-            olusturma TEXT DEFAULT ''
-        )
-    """)
+    cols = ",\n".join(
+        f"{n} INTEGER DEFAULT 0" if n in ("min_deneyim", "surucu_belgesi") else f"{n} TEXT DEFAULT ''"
+        for n in NAMES
+    )
+    _run(f"CREATE TABLE IF NOT EXISTS {TABLE} (id {id_col}, {cols}, olusturma TEXT DEFAULT '')")
     if seed_file and os.path.exists(seed_file):
-        row = _run("SELECT COUNT(*) AS n FROM ilanlar", fetch="one")
+        row = _run(f"SELECT COUNT(*) AS n FROM {TABLE}", fetch="one")
         if row and int(row["n"]) == 0:
             with open(seed_file, encoding="utf-8") as f:
                 for ilan in json.load(f):
                     add_job(ilan)
 
 
+def _to_list(v):
+    if isinstance(v, (list, tuple)):
+        return [str(x).strip() for x in v if str(x).strip()]
+    return [s.strip() for s in str(v or "").split("|") if s.strip()]
+
+
 def _clean(data):
+    """Form (MultiDict) veya dict'ten veritabanı satırı üret."""
+    getlist = getattr(data, "getlist", None)
     out = {}
-    for k in FIELDS:
-        v = data.get(k, "")
-        if k == "aktif":
-            out[k] = 1 if v in (1, True, "1", "on", "true", "evet") else 0
+    for name, is_list in FIELDS:
+        if is_list:
+            vals = getlist(name) if getlist else data.get(name, [])
+            out[name] = "|".join(_to_list(vals))
+        elif name in ("min_deneyim",):
+            try:
+                out[name] = max(0, int(data.get(name) or 0))
+            except ValueError:
+                out[name] = 0
+        elif name == "surucu_belgesi":
+            out[name] = 1 if data.get(name) in (1, True, "1", "on", "evet") else 0
         else:
-            out[k] = str(v or "").strip()
+            out[name] = str(data.get(name) or "").strip()
+    if out["durum"] not in DURUMLAR:
+        out["durum"] = "bekliyor"
     return out
 
 
-def add_job(data):
+def _decode(row):
+    if not row:
+        return row
+    for name, is_list in FIELDS:
+        if is_list:
+            row[name] = _to_list(row.get(name))
+    return row
+
+
+def add_job(data, durum=None):
     d = _clean(data)
-    if "aktif" not in data:
-        d["aktif"] = 1
-    cols = ", ".join(FIELDS + ["olusturma"])
-    marks = ", ".join(["?"] * (len(FIELDS) + 1))
-    _run(f"INSERT INTO ilanlar ({cols}) VALUES ({marks})",
-         [d[k] for k in FIELDS] + [date.today().isoformat()])
+    if durum:
+        d["durum"] = durum
+    cols = ", ".join(NAMES + ["olusturma"])
+    marks = ", ".join(["?"] * (len(NAMES) + 1))
+    _run(f"INSERT INTO {TABLE} ({cols}) VALUES ({marks})",
+         [d[n] for n in NAMES] + [date.today().isoformat()])
 
 
 def update_job(job_id, data):
     d = _clean(data)
-    sets = ", ".join(f"{k} = ?" for k in FIELDS)
-    _run(f"UPDATE ilanlar SET {sets} WHERE id = ?", [d[k] for k in FIELDS] + [job_id])
+    sets = ", ".join(f"{n} = ?" for n in NAMES)
+    _run(f"UPDATE {TABLE} SET {sets} WHERE id = ?", [d[n] for n in NAMES] + [job_id])
+
+
+def set_status(job_id, durum):
+    if durum in DURUMLAR:
+        _run(f"UPDATE {TABLE} SET durum = ? WHERE id = ?", (durum, job_id))
 
 
 def delete_job(job_id):
-    _run("DELETE FROM ilanlar WHERE id = ?", (job_id,))
+    _run(f"DELETE FROM {TABLE} WHERE id = ?", (job_id,))
 
 
 def get_job(job_id):
-    return _run("SELECT * FROM ilanlar WHERE id = ?", (job_id,), fetch="one")
+    return _decode(_run(f"SELECT * FROM {TABLE} WHERE id = ?", (job_id,), fetch="one"))
 
 
-def list_jobs(only_active=True):
-    sql = "SELECT * FROM ilanlar"
-    if only_active:
-        sql += " WHERE aktif = 1"
+def list_jobs(only_published=True):
+    sql = f"SELECT * FROM {TABLE}"
+    if only_published:
+        sql += " WHERE durum = 'yayinda'"
     sql += " ORDER BY id DESC"
-    jobs = _run(sql, fetch="all")
-    if only_active:
+    jobs = [_decode(j) for j in _run(sql, fetch="all")]
+    if only_published:
         today = date.today().isoformat()
         jobs = [j for j in jobs if not j.get("son_tarih") or j["son_tarih"] >= today]
     return jobs
 
 
 def export_jobs():
-    jobs = list_jobs(only_active=False)
-    return [{k: j.get(k) for k in FIELDS} for j in jobs]
+    return [{n: j.get(n) for n in NAMES} for j in list_jobs(only_published=False)]
