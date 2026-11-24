@@ -1,11 +1,13 @@
-{# Kullanım: {% with il=..., ilce=..., zorunlu=True %}{% include "_il_ilce.html" %}{% endwith %} #}
+{# Kullanım: {% with il=..., ilce=..., zorunlu=True %}{% include "_il_ilce.html" %}{% endwith %}
+   İlçe listesi olan illerde açılır liste gösterilir ("Listede yok" seçilirse yazı kutusu açılır);
+   listesi olmayan illerde doğrudan yazı kutusu gösterilir. #}
 <label>İl{% if zorunlu %} *{% endif %}
-  <select name="il" data-il="ilce-listesi" {% if zorunlu %}required{% endif %}>
+  <select name="il" id="il-sec" {% if zorunlu %}required{% endif %}>
     <option value="">— İl seçin —</option>
     {% for x in S.ILLER %}<option {% if il == x %}selected{% endif %}>{{ x }}</option>{% endfor %}
   </select>
 </label>
-<label>İlçe <small>(listeden seçin veya yazın)</small>
-  <input name="ilce" list="ilce-listesi" value="{{ ilce or '' }}" autocomplete="off" placeholder="ör. Üsküdar">
-  <datalist id="ilce-listesi"></datalist>
+<label>İlçe
+  <select name="ilce" id="ilce-sec" data-secili="{{ ilce or '' }}"></select>
+  <input name="ilce" id="ilce-yaz" value="{{ ilce or '' }}" autocomplete="off" placeholder="İlçe adını yazın" hidden disabled>
 </label>

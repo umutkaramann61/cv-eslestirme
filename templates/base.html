@@ -29,19 +29,34 @@
   {% if not is_admin %}· <a href="{{ url_for('admin_login') }}">Yönetici girişi</a>{% endif %}
 </footer>
 <script>
-  // İl seçilince ilçe önerilerini güncelle (listede yoksa elle yazılabilir)
+  // İl seçilince ilçe açılır listesini doldur; listede olmayan ilçe için yazı kutusu aç
   (function () {
     var ILCELER = {{ S.ILCELER | tojson }};
-    document.querySelectorAll('[data-il]').forEach(function (ilSel) {
-      var dl = document.getElementById(ilSel.dataset.il);
-      function doldur() {
-        dl.innerHTML = '';
-        (ILCELER[ilSel.value] || []).forEach(function (x) {
-          var o = document.createElement('option'); o.value = x; dl.appendChild(o);
-        });
-      }
-      ilSel.addEventListener('change', doldur); doldur();
+    var il = document.getElementById('il-sec'), sec = document.getElementById('ilce-sec'),
+        yaz = document.getElementById('ilce-yaz');
+    if (!il) return;
+    var DIGER = '__diger__';
+    function goster(yaziMi) {
+      sec.hidden = yaziMi; sec.disabled = yaziMi;
+      yaz.hidden = !yaziMi; yaz.disabled = !yaziMi;
+    }
+    function opt(v, t) { var o = document.createElement('option'); o.value = v; o.textContent = t; return o; }
+    function doldur(ilk) {
+      var liste = ILCELER[il.value], secili = ilk ? sec.dataset.secili : '';
+      sec.innerHTML = '';
+      if (!il.value) { sec.appendChild(opt('', '— Önce il seçin —')); goster(false); return; }
+      if (!liste) { goster(true); if (!ilk) yaz.value = ''; return; }
+      sec.appendChild(opt('', '— İlçe seçin (isteğe bağlı) —'));
+      liste.forEach(function (x) { sec.appendChild(opt(x, x)); });
+      sec.appendChild(opt(DIGER, 'Listede yok, kendim yazacağım'));
+      if (secili && liste.indexOf(secili) < 0) { sec.value = DIGER; goster(true); yaz.value = secili; }
+      else { sec.value = secili || ''; goster(false); }
+    }
+    il.addEventListener('change', function () { doldur(false); });
+    sec.addEventListener('change', function () {
+      if (sec.value === DIGER) { goster(true); yaz.value = ''; yaz.focus(); }
     });
+    doldur(true);
   })();
 </script>
 {% block scripts %}{% endblock %}
