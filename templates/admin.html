@@ -39,6 +39,18 @@
 </table>
 </div>
 <div class="kart">
+  <h2><span class="ig-rozet">IG</span> Instagram otomatik aktarım</h2>
+  {% if ig.aktif %}
+    <p>Açık. Hesaptaki yeni ilan gönderileri her saat kendiliğinden kontrol edilir ve <b>"Onay bekliyor"</b> olarak gelir.
+      Gelen ilanlarda il, sektör ve uzmanlık alanlarını kontrol edip <b>Onayla</b>'ya basın.</p>
+    <p class="soluk">Son kontrol: {{ ig.son_kontrol or 'henüz yok' }}{% if ig.son_kontrol %} · son seferde {{ ig.son_eklenen }} ilan eklendi{% endif %}</p>
+    {% if ig.son_hata %}<div class="uyari hata">{{ ig.son_hata }}</div>{% endif %}
+    <form method="post" action="{{ url_for('instagram_cek') }}"><input type="hidden" name="csrf" value="{{ csrf_token }}"><button class="btn ikincil">Şimdi kontrol et</button></form>
+  {% else %}
+    <p class="soluk">Kapalı. Açmak için Render'da <code>INSTAGRAM_TOKEN</code> ayarı girilmeli (kurulum rehberine bakın).</p>
+  {% endif %}
+</div>
+<div class="kart">
   <h2>Yedekleme</h2>
   <p class="soluk">İlanları ara sıra yedekleyin. Yedek dosyasını yükleyerek ilanları geri getirebilirsiniz.</p>
   <a class="btn ikincil" href="{{ url_for('yedek_indir') }}">Yedeği indir (.json)</a>

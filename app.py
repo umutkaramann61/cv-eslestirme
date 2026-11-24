@@ -11,6 +11,7 @@ from flask import (Flask, Response, abort, flash, redirect, render_template,
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import db
+import instagram
 import matcher
 import secenekler as S
 
@@ -40,6 +41,16 @@ def inject_globals():
     return {"SITE_ADI": SITE_ADI, "OKUL_ADI": OKUL_ADI, "S": S,
             "csrf_token": session["csrf"], "is_admin": session.get("admin", False),
             "deneyim_etiketi": dict(S.DENEYIM_SECENEKLERI)}
+
+
+@app.before_request
+def instagram_kontrol():
+    # Süresi geldiyse Instagram'daki yeni ilan gönderilerini arka planda çek
+    if request.method == "GET" and not request.path.startswith("/static"):
+        try:
+            instagram.arka_planda_kontrol()
+        except Exception:
+            pass
 
 
 @app.after_request
@@ -194,7 +205,21 @@ def admin():
     sira = {"bekliyor": 0, "yayinda": 1, "pasif": 2}
     jobs.sort(key=lambda j: (sira.get(j["durum"], 3), -j["id"]))
     bekleyen = sum(1 for j in jobs if j["durum"] == "bekliyor")
-    return render_template("admin.html", ilanlar=jobs, bekleyen=bekleyen)
+    return render_template("admin.html", ilanlar=jobs, bekleyen=bekleyen, ig=instagram.durum())
+
+
+@app.route("/yonetim/instagram/cek", methods=["POST"])
+@admin_required
+def instagram_cek():
+    check_csrf()
+    n = instagram.cek(zorla=True)
+    if n is None:
+        flash("Instagram'dan çekilemedi: " + (instagram.durum()["son_hata"] or "bağlantı kurulamadı."), "hata")
+    elif n == 0:
+        flash("Instagram'da yeni ilan gönderisi yok.", "bilgi")
+    else:
+        flash(f"Instagram'dan {n} yeni ilan geldi. Kontrol edip onaylayın.", "basari")
+    return redirect(url_for("admin"))
 
 
 @app.route("/yonetim/ilan/yeni", methods=["GET", "POST"])

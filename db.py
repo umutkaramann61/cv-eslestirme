@@ -81,6 +81,8 @@ def init_db(seed_file=None):
         if n not in mevcut:
             tip = "INTEGER DEFAULT 0" if n in ("min_deneyim", "surucu_belgesi") else "TEXT DEFAULT ''"
             _run(f"ALTER TABLE {TABLE} ADD COLUMN {n} {tip}")
+    # Basit anahtar-değer ayarları (Instagram anahtarı, son kontrol zamanı vb.)
+    _run("CREATE TABLE IF NOT EXISTS ayarlar (anahtar TEXT PRIMARY KEY, deger TEXT DEFAULT '')")
     if seed_file and os.path.exists(seed_file):
         row = _run(f"SELECT COUNT(*) AS n FROM {TABLE}", fetch="one")
         if row and int(row["n"]) == 0:
@@ -165,6 +167,24 @@ def list_jobs(only_published=True):
         today = date.today().isoformat()
         jobs = [j for j in jobs if not j.get("son_tarih") or j["son_tarih"] >= today]
     return jobs
+
+
+def get_setting(key, default=""):
+    row = _run("SELECT deger FROM ayarlar WHERE anahtar = ?", (key,), fetch="one")
+    return row["deger"] if row else default
+
+
+def set_setting(key, value):
+    _run("INSERT INTO ayarlar (anahtar, deger) VALUES (?, ?) "
+         "ON CONFLICT (anahtar) DO UPDATE SET deger = excluded.deger", (key, str(value)))
+
+
+def instagram_links():
+    """Sistemde kayıtlı (silinmiş olsa bile görülmüş) Instagram gönderi linkleri."""
+    rows = _run(f"SELECT instagram FROM {TABLE} WHERE instagram <> ''", fetch="all")
+    links = {r["instagram"] for r in rows}
+    links |= {x for x in get_setting("ig_gorulen").split("|") if x}
+    return links
 
 
 def export_jobs():

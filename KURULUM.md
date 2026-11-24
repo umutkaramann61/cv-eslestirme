@@ -100,3 +100,25 @@ Varsayılan `*` değeri tüm sitelere izin verir.
 | `SITE_ADI` | Üst başlıkta görünen ad (varsayılan: Kariyer Eşleştirme) |
 | `OKUL_ADI` | Başlığın yanındaki okul adı |
 | `FRAME_ANCESTORS` | Siteyi gömebilecek adresler |
+
+---
+
+## 6. Instagram'dan otomatik ilan aktarımı (isteğe bağlı)
+
+Hesaptaki **yeni gönderiler** her saat kontrol edilir. Açıklamasında "ilan, aranıyor, personel,
+stajyer, eleman, #işilanı…" gibi kelimeler geçen gönderiler siteye **"Onay bekliyor"** olarak gelir.
+İl, ilçe, uzmanlık, robot markası, ehliyet ve deneyim açıklamadan tahmin edilir; siz kontrol edip
+**Onayla** dersiniz. Yönetim sayfasındaki **"Şimdi kontrol et"** düğmesiyle beklemeden de çekebilirsiniz.
+
+**Gerekenler**
+1. Instagram hesabı **İşletme** veya **İçerik Üreticisi** hesabı olmalı
+   (Instagram → Profil → ☰ → Hesap türü ve araçlar → Profesyonel hesaba geç).
+2. <https://developers.facebook.com> → **My Apps → Create App** → kullanım alanı olarak
+   **Instagram** ("Manage messaging & content on Instagram") seçin.
+3. Uygulamada **Instagram → API setup with Instagram login** → **Generate access tokens** →
+   **Add account** ile Instagram hesabınıza giriş yapın → çıkan **erişim anahtarını (token)** kopyalayın.
+4. Render → cv-eslestirme → **Environment** → `INSTAGRAM_TOKEN` adıyla bu anahtarı ekleyip kaydedin.
+
+Anahtar 60 gün geçerlidir; site onu 30 günde bir kendiliğinden yeniler. Bir sorun olursa
+yönetim sayfasındaki Instagram kutusunda hata mesajı görünür; yeni anahtar alıp Render'a girmeniz yeterlidir.
+Aranan kelimeler `IG_ANAHTAR_KELIMELER`, kontrol sıklığı `IG_KONTROL_DAKIKA` ayarıyla değiştirilebilir.
