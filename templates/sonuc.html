@@ -8,6 +8,18 @@
 <p class="soluk">{{ seeker.il }}{% if seeker.ilce %} / {{ seeker.ilce }}{% endif %} · Sektör: {{ seeker.sektor or 'Tümü' }}
   · {{ seeker.deneyimler|length }} deneyim · Sürücü belgesi: {{ 'var' if seeker.surucu_belgesi else 'yok' }}.
   Puanlar yol göstericidir; başvurmaktan çekinme!</p>
+{% if seeker.deneyimler %}
+<div class="kart deneyim-ozet">
+  <b>Deneyimlerin:</b>
+  <ul>
+  {% for d in seeker.deneyimler %}
+    <li>{{ d.alan }}{% if d.markalar %} ({{ d.markalar | join(', ') }}){% endif %}
+      {% if d.firma %} — <b>{{ d.firma }}</b>{% endif %}
+      <span class="soluk">· {{ d.giris }} – {{ d.cikis or 'devam ediyor' }} ({{ d.sure }})</span></li>
+  {% endfor %}
+  </ul>
+</div>
+{% endif %}
 
 {% for r in sonuclar %}
 {% set ilan = r.ilan %}

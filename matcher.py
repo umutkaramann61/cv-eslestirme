@@ -56,8 +56,10 @@ def parse_seeker(form):
             hatalar.append(f"{i}. deneyimde çıkış tarihi girişten önce olamaz.")
             continue
         markalar = form.getlist(f"d{i}_marka") if hasattr(form, "getlist") else form.get(f"d{i}_marka", [])
-        s["deneyimler"].append({"alan": alan, "giris": giris, "cikis": cikis,
-                                "ay": _months(giris, cikis), "markalar": list(markalar)})
+        s["deneyimler"].append({"alan": alan, "firma": form.get(f"d{i}_firma", "").strip(),
+                                "giris": giris, "cikis": cikis,
+                                "ay": _months(giris, cikis), "sure": _yil_metni(_months(giris, cikis)),
+                                "markalar": list(markalar)})
     return s, hatalar
 
 

@@ -25,18 +25,20 @@
   </div>
 
   <h2>Deneyimler <small class="soluk">(en fazla {{ S.MAKS_DENEYIM }}; deneyimin yoksa boş bırak)</small></h2>
+  <p class="soluk">Hâlâ çalıştığın yerde <b>çıkış tarihini boş bırak</b>.</p>
   {% for i in range(1, S.MAKS_DENEYIM + 1) %}
   <fieldset class="deneyim" data-no="{{ i }}">
     <legend>{{ i }}. deneyim</legend>
-    <div class="uclu">
+    <div class="dortlu">
       <label>Alan
         <select name="d{{ i }}_alan" class="d-alan">
           <option value="">— Seçin —</option>
           {% for x in S.UZMANLIK_ALANLARI %}<option {% if form.get('d%d_alan' % i) == x %}selected{% endif %}>{{ x }}</option>{% endfor %}
         </select>
       </label>
+      <label>Çalıştığı firma<input name="d{{ i }}_firma" value="{{ form.get('d%d_firma' % i, '') }}" placeholder="Firma adı"></label>
       <label>Giriş tarihi<input type="month" name="d{{ i }}_giris" value="{{ form.get('d%d_giris' % i, '') }}"></label>
-      <label>Çıkış tarihi <small>(hâlâ çalışıyorsan boş bırak)</small><input type="month" name="d{{ i }}_cikis" value="{{ form.get('d%d_cikis' % i, '') }}"></label>
+      <label>Çıkış tarihi<input type="month" name="d{{ i }}_cikis" value="{{ form.get('d%d_cikis' % i, '') }}"></label>
     </div>
     <div class="markalar" hidden>
       <span>Robot markası:</span>

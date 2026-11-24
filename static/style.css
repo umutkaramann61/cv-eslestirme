@@ -115,3 +115,7 @@ fieldset legend { font-weight: 600; padding: 0 6px; }
 .detay dt { color: var(--soluk); } .detay dd { margin: 0; }
 .orta-metin { text-align: center; }
 @media (max-width: 640px) { .secim, .uclu { grid-template-columns: 1fr; } .detay { grid-template-columns: 1fr; } .detay dd { margin-bottom: 6px; } }
+.dortlu { display: grid; grid-template-columns: 1.4fr 1.4fr 1fr 1fr; gap: 0 14px; }
+.deneyim-ozet ul { margin: 6px 0 0; padding-left: 20px; } .deneyim-ozet li { margin: 3px 0; }
+@media (max-width: 760px) { .dortlu { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .dortlu { grid-template-columns: 1fr; } }
